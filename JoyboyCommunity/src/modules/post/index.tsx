@@ -35,7 +35,7 @@ export default function CreatePost() {
       }
 
       /** @TODO handle tags NIP-10  */
-      const noteEvent = sendNote(privateKey, note);
+      const noteEvent = await sendNote(privateKey, note);
       console.log('noteEvent', noteEvent);
       if (noteEvent?.isValid) {
         alert('Note send');

@@ -4,13 +4,14 @@ import {
   finalizeEvent,
   NostrEvent,
   parseReferences,
+  Relay,
   SimplePool,
   VerifiedEvent,
   verifyEvent,
 } from 'nostr-tools';
 import {useMemo, useState} from 'react';
 
-import {RELAYS_PROD} from '../utils/relay';
+import {JOYBOY_RELAYS, RELAYS_PROD} from '../utils/relay';
 
 export const useNostr = () => {
   const pool = new SimplePool();
@@ -182,14 +183,15 @@ export const useNostr = () => {
     }
   };
 
-  const sendNote = (
+  const sendNote = async (
     sk: Uint8Array,
     content: string,
     tags?: string[][],
-  ): {
+  ): Promise<{
     event?: VerifiedEvent;
     isValid?: boolean;
-  } => {
+    published?: Promise<string>[];
+  }> => {
     try {
       const event = finalizeEvent(
         {
@@ -204,17 +206,22 @@ export const useNostr = () => {
 
       const isGood = verifyEvent(event);
 
-      if (isGood) {
-        return {
-          event,
-          isValid: true,
-        };
-      } else {
+      if (!isGood) {
         return {
           event,
           isValid: false,
         };
       }
+      console.log('isGood', isGood);
+
+      let eventPublish = await pool.publish(JOYBOY_RELAYS, event);
+      console.log('eventPublish', eventPublish);
+
+      return {
+        event,
+        isValid: true,
+        published:eventPublish
+      };
     } catch (e) {
       console.log('issue sendNote', e);
       return {
