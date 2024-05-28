@@ -3,6 +3,7 @@ import {
   SimplePool,
   generateSecretKey,
   getPublicKey,
+  nip05,
 } from "nostr-tools";
 import { finalizeEvent, verifyEvent } from "nostr-tools";
 import { Relay } from "nostr-tools";
@@ -55,3 +56,18 @@ export const sendEvent = async (
     };
   }
 };
+
+/** @TODO implement get public key by handle with NIP-05 and NIP-24 */
+export const getPublicKeyByHandle = async (name: string) => {
+  try {
+    let profile;
+    profile = await nip05.queryProfile(name)
+    /** try get event NIP-24 */
+    if (!profile) {
+
+    }
+    return profile
+  } catch (e) {
+    console.log("Error getPublicKeyByHandle", e)
+  }
+}

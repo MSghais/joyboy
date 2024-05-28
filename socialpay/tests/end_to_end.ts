@@ -3,6 +3,7 @@ import { generateKeypair, sendEvent } from "../src/utils/nostr";
 import { checkAndFilterSocialPayContent } from "../src/utils/check";
 import dotenv from "dotenv";
 import axios from "axios";
+import { logDev } from "../src/utils/log";
 dotenv.config();
 
 /** Requirements
@@ -10,6 +11,8 @@ dotenv.config();
  *
  * Create a Starknet account
  * Create two keypair for nostr
+ * Send a note with a content format for Social Pay request
+ * Call the Social relayer
  */
 export const endToEndTest = async () => {
   /** Generate starknet account */
@@ -20,7 +23,6 @@ export const endToEndTest = async () => {
 
   /**  Generate keypair for both account*/
   // Bob nostr account
-
   let { privateKey: pkBob, publicKey: bobPublicKey } = generateKeypair();
 
   // Alice nostr account
@@ -29,16 +31,16 @@ export const endToEndTest = async () => {
   /** Send a note */
   let contentRequest = "@joyboy send 10 USDC to @alice.xyz";
   let content = "a test";
+  // Check request, need to be undefined
   let request = checkAndFilterSocialPayContent(content);
+  logDev(`first request need to be undefined request ${request}`)
+  request = checkAndFilterSocialPayContent(contentRequest);
+  logDev(`second request = ${JSON.stringify(request)}`)
 
-  console.log("request", request);
   let { event, isValid } = await sendEvent(pkBob, contentRequest);
   console.log("event", event);
 
-  /** Add the backend call */
-
-  // let res = await axios.post("http://localhost:8080/pay", {event:note})
-
+  /**@TODO Finish the relayer callback */
   let res = await axios.post("http://localhost:8080/pay", { event: event });
   console.log("res", res?.data);
 
