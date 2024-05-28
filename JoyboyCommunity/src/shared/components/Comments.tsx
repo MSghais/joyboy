@@ -1,8 +1,13 @@
-import React from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {FlatList, View} from 'react-native';
-
 import PostComment from './PostComment';
-
+import {Input} from '../../components';
+import {SendComment, ViewSendComment} from './styled';
+import {MaterialCommunityIcons} from '@expo/vector-icons';
+import {useNostr} from '../../hooks/useNostr';
+import {useAuth} from '../../store/auth';
+import {Event as EventNostr} from 'nostr-tools';
+import {JOYBOY_RELAYS} from '../../utils/relay';
 const mockEvents = [
   {
     post: {
@@ -74,18 +79,96 @@ const mockEvents = [
     sourceUser: null,
   },
 ];
-function Comments() {
+
+interface IComments {
+  event?: EventNostr;
+}
+function Comments({event}: IComments) {
+  const [text, setText] = useState<string | undefined>();
+  const {privateKey, publicKey} = useAuth();
+
+  const [comments, setComments] = useState<EventNostr[] | undefined>([]);
+
+  const {sendNote, getEventsByQuery} = useNostr();
+
+  useEffect(() => {
+    const fetchReplies = async () => {
+      if (event?.id) {
+        let tags = [['e', event?.id]];
+        let eventsFind = await getEventsByQuery(['1'], [1], {
+          '#e': tags[0],
+        });
+        console.log('events comments', eventsFind);
+        setComments(eventsFind);
+      }
+    };
+    fetchReplies();
+  }, [event]);
+  /** @TODO handle send comment */
+
+  const handleSendComment = useCallback(async () => {
+    try {
+      console.log('handle send note');
+      // do something on post
+      if (!text || text?.length == 0) {
+        alert('Write your note');
+        return;
+      }
+      alert('Note sending, please wait.');
+
+      if (!privateKey) {
+        alert('Please login before send a note');
+        return;
+      }
+
+      /** @TODO handle tags NIP-10  */
+
+      /** tags  */
+      // let tags = [['e', event?.id, JOYBOY_RELAYS[0], 'root', publicKey]];
+      let tags = [['e', event?.id, JOYBOY_RELAYS[0], 'root', publicKey]];
+
+      const noteEvent = await sendNote(privateKey, text, tags);
+      console.log('noteEvent', noteEvent);
+      if (noteEvent?.isValid) {
+        alert('Note send');
+      }
+    } catch (e) {
+      console.log('Error send note', e);
+    }
+  }, [text]);
+  const isCreateDisabled = text && text?.length > 0 ? false : true;
+
+  /**@TODO fetch data */
+  useEffect(() => {}, []);
   return (
-    <FlatList
-      horizontal={false}
-      scrollEnabled={false}
-      showsHorizontalScrollIndicator={false}
-      data={mockEvents}
-      ItemSeparatorComponent={() => <View style={{height: 18}} />}
-      renderItem={({item}) => {
-        return <PostComment event={item.event} post={item.post} sourceUser={item.sourceUser} />;
-      }}
-    />
+    <View>
+      <ViewSendComment>
+        <Input placeholder="Enter your comment" value={text} onChangeText={setText} />
+        <SendComment
+          disabled={isCreateDisabled}
+          // style={{backgroundColor: isCreateDisabled && 'gray'}}
+          onPress={handleSendComment}
+        >
+          <MaterialCommunityIcons
+            name="send-circle"
+            size={24}
+            color={isCreateDisabled ? 'gray' : 'black'}
+          />
+        </SendComment>
+      </ViewSendComment>
+
+      <FlatList
+        horizontal={false}
+        scrollEnabled={false}
+        showsHorizontalScrollIndicator={false}
+        data={[...comments]}
+        ItemSeparatorComponent={() => <View style={{height: 18}} />}
+        renderItem={({item}) => {
+          return <PostComment event={item} />;
+          // return <PostComment event={item?.event} post={item?.post} sourceUser={item.sourceUser} />;
+        }}
+      />
+    </View>
   );
 }
 

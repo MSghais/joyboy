@@ -15,7 +15,7 @@ import {JOYBOY_RELAYS, RELAYS_PROD} from '../utils/relay';
 
 export const useNostr = () => {
   const pool = new SimplePool();
-  const relays = RELAYS_PROD;
+  const relays = JOYBOY_RELAYS;
   const nip07signer = new NDKNip07Signer();
   const ndk = new NDK({signer: nip07signer});
 
@@ -114,15 +114,41 @@ export const useNostr = () => {
     }
   };
 
+  // const getEventsByQuery = async (
+  //   ids: string[] = ['1', '3'],
+  //   filter?: Filter,
+  //   relaysProps?: string[],
+  // ) => {
+  //   try {
+  //     const events = await pool.querySync(relaysProps ?? relays, {
+  //       ids,
+  //       ...filter,
+  //     });
+  //     return events;
+  //   } catch (e) {
+  //     console.log('error getEventsByQuery', e);
+  //   }
+  // };
+
+  const getEventsFilter = async (filter?: Filter, isSetEvents?: boolean) => {
+    const eventsNotes = await pool.querySync(relays, {kinds: [1], ...filter});
+    if (isSetEvents) {
+      setEventsData(eventsNotes);
+    }
+    return eventsNotes;
+  };
+
   const getEventsByQuery = async (
     ids: string[] = ['1', '3'],
+    kinds: number[] = [1, 3],
     filter?: Filter,
     relaysProps?: string[],
   ) => {
     try {
       const events = await pool.querySync(relaysProps ?? relays, {
-        ids,
         ...filter,
+        kinds,
+        // ids,
       });
       return events;
     } catch (e) {
@@ -187,6 +213,7 @@ export const useNostr = () => {
     sk: Uint8Array,
     content: string,
     tags?: string[][],
+    kind: number = 1,
   ): Promise<{
     event?: VerifiedEvent;
     isValid?: boolean;
@@ -195,7 +222,7 @@ export const useNostr = () => {
     try {
       const event = finalizeEvent(
         {
-          kind: 1,
+          kind: kind ?? 1,
           created_at: Math.floor(Date.now() / 1000),
           tags: tags ?? [],
           content,
@@ -215,12 +242,19 @@ export const useNostr = () => {
       console.log('isGood', isGood);
 
       let eventPublish = await pool.publish(JOYBOY_RELAYS, event);
+
+      let test = await pool.publish(JOYBOY_RELAYS, event);
+
       console.log('eventPublish', eventPublish);
+
+      let relay = await Relay.connect(JOYBOY_RELAYS[0]);
+      let publish = await relay.publish(event);
+      console.log('publish', publish);
 
       return {
         event,
         isValid: true,
-        published:eventPublish
+        published: eventPublish,
       };
     } catch (e) {
       console.log('issue sendNote', e);

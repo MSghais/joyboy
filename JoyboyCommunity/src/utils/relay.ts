@@ -1,6 +1,7 @@
 export const JOYBOY_RELAYS = [
-  'wss://nostr.joyboy.community',
-  'wss://localhost:3000',
+  // 'http://localhost:3000',
+  'ws://localhost:3000',
+  // 'wss://nostr.joyboy.community',
 ];
 
 
