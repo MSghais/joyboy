@@ -1,14 +1,14 @@
 {
   "name": "socialpay",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "test": "ts-node tests/index.ts",
     "start": "ts-node src/index.ts",
     "dev": "ts-node index.ts",
     "relay": "ts-node src/index.ts",
-    "relay:dev": "nodemon --watch src --exec \"ts-node src/index.ts\""
+    "relay:dev":"nodemon --ext *"
   },
   "dependencies": {
     "@nostr-dev-kit/ndk": "^2.8.1",

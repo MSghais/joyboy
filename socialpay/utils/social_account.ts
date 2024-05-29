@@ -2,7 +2,7 @@ import { Account, ec, json, stark, Provider, hash, CallData, RpcProvider, Contra
 import fs from 'fs';
 import axios from 'axios';
 import dotenv from "dotenv"
-import { SocialPayRequest } from 'src/types';
+import { SocialPayRequest } from 'types';
 dotenv.config()
 const STARKNET_URL = process.env.RPC_ENDPOINT || 'http://127.0.0.1:5050'
 const PATH_SOCIAL_ACCOUNT = "../abi/social_account.json"
@@ -103,7 +103,7 @@ export const prepareAndConnectContract = async (
 
 }
 
-export const handleTransfer = async (
+export const handleTransferRequest = async (
     socialPay: Contract,
     socialRequest: SocialPayRequest,
 ) => {

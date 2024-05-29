@@ -1,9 +1,9 @@
-import { connectToStarknet, createStarknetWallet } from "../src/utils/starknet";
-import { generateKeypair, sendEvent } from "../src/utils/nostr";
-import { checkAndFilterSocialPayContent } from "../src/utils/check";
+import { connectToStarknet, createStarknetWallet } from "../utils/starknet";
+import { generateKeypair, sendEvent } from "../utils/nostr";
+import { checkAndFilterSocialPayContent } from "../utils/check";
 import dotenv from "dotenv";
 import axios from "axios";
-import { logDev } from "../src/utils/log";
+import { logDev } from "../utils/log";
 dotenv.config();
 
 /** Requirements
@@ -15,34 +15,41 @@ dotenv.config();
  * Call the Social relayer
  */
 export const endToEndTest = async () => {
-  /** Generate starknet account */
+  try {
+    /** Generate starknet account for Paymaster*/
+    const provider = await connectToStarknet();
+    const privateKey = createStarknetWallet();
 
-  const provider = await connectToStarknet();
+    /**  Generate keypair for both account*/
+    // Bob nostr account
+    let { privateKey: pkBob, publicKey: bobPublicKey } = generateKeypair();
 
-  const privateKey = createStarknetWallet()
+    // Alice nostr account
+    let { privateKey: pkAlice, publicKey: alicePublicKey } = generateKeypair();
 
-  /**  Generate keypair for both account*/
-  // Bob nostr account
-  let { privateKey: pkBob, publicKey: bobPublicKey } = generateKeypair();
+    /** Send a note */
+    let contentRequest = "@joyboy send 10 USDC to @alice.xyz";
+    let content = "a test";
+    // Check request, need to be undefined
+    let request = checkAndFilterSocialPayContent(content);
+    logDev(`first request need to be undefined request ${request}`);
 
-  // Alice nostr account
-  let { privateKey: pkAlice, publicKey: alicePublicKey } = generateKeypair();
+    // Check request, need to be defined with sender, amount, token, recipient
+    request = checkAndFilterSocialPayContent(contentRequest);
+    logDev(`second request = ${JSON.stringify(request)}`);
 
-  /** Send a note */
-  let contentRequest = "@joyboy send 10 USDC to @alice.xyz";
-  let content = "a test";
-  // Check request, need to be undefined
-  let request = checkAndFilterSocialPayContent(content);
-  logDev(`first request need to be undefined request ${request}`)
-  request = checkAndFilterSocialPayContent(contentRequest);
-  logDev(`second request = ${JSON.stringify(request)}`)
+    let { event, isValid } = await sendEvent(pkBob, contentRequest);
+    console.log("event", event);
 
-  let { event, isValid } = await sendEvent(pkBob, contentRequest);
-  console.log("event", event);
 
-  /**@TODO Finish the relayer callback */
-  let res = await axios.post("http://localhost:8080/pay", { event: event });
-  console.log("res", res?.data);
+    /** @TODO init all account for users */
 
-  return;
+    /**@TODO Finish the relayer callback */
+    let res = await axios.post("http://localhost:8080/pay", { event: event });
+    console.log("res", res?.data);
+
+    return;
+  } catch (e:any) {
+    console.log("endToEndTest", e);
+  }
 };

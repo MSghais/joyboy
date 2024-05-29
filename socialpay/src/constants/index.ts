@@ -13,3 +13,10 @@ export const ERROR_MESSAGES= {
         message:"The pay request content on the event note is not correct"
     }
 }
+
+export const TEST_PROFILE= {
+    "alice":{
+        "name":"alice.xyz",
+        "pubkey":""
+    }
+}
