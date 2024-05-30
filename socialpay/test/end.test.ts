@@ -4,6 +4,7 @@ import { generateKeypair, sendEvent } from "../utils/nostr";
 import { checkAndFilterSocialPayContent } from "../utils/check";
 import { logDev } from "../utils/log";
 import { createSocialAccount } from "../utils/social_account";
+import { createToken } from "../utils/token";
 
 describe("End to end function", () => {
   // it("Pay End to end test", async () => {
@@ -55,7 +56,10 @@ describe("End to end function", () => {
      * Get both account for Bob & Alice
      * Send request of account bob to alice
      */
-    let accountBob = await createSocialAccount(bobPublicKey);
+
+    let tokenA = await createToken();
+
+    // let accountBob = await createSocialAccount(bobPublicKey);
 
     // let accountAlice = await createSocialAccount(bobPublicKey);
   });

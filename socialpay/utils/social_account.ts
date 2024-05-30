@@ -111,6 +111,14 @@ export const createSocialAccount = async (nostrPublicKey: string) => {
     // console.log("tx receipt =", txR);
     // console.log("Declare Sierra account =",);
 
+    // const deployResponse = await account0.declareAndDeploy({
+    //   contract: compiledSierraAAaccount,
+    //   casm: compiledAACasm
+    // });
+    // console.log("deployResponse =", deployResponse);
+
+    
+
     const { transaction_hash: declTH, class_hash: decCH } =
       await account0.declare({
         contract: compiledSierraAAaccount,
