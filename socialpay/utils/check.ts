@@ -73,6 +73,10 @@ export const getProfilesByNames = async (requestFormat: ContentFormat, event?:Ev
       if (receiverProfile) {
         receiverAddress = receiverProfile?.pubkey;
       }
+
+      if(receiver?.includes("alice.dev")) {
+        
+      }
     }
 
     let object = {

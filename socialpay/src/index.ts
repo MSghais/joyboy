@@ -9,7 +9,8 @@ const app = express();
 const port = process.env.PORT_SOCIALPAY || 8080;
 app.use(express.json());
 
-/*** Endpoint to receive Nostr messages for Social pay
+/*** Maybe not needed on the specs. We can discuss it:
+ * Endpoint to receive Nostr messages for Social pay 
  * @TODO :  sanitize event
  * Receive event Nostr
  * Check SocialAccount created and linked

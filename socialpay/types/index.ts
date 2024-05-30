@@ -4,6 +4,10 @@ export interface SocialPayRequest extends EventNostr {
     sender?: string;
     to?: string;
     addressToken?: string;
+    signature: {
+        r:string,
+        x:string
+    }
 }
 
 

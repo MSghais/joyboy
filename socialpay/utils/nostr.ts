@@ -2,11 +2,14 @@ import {
   Event,
   SimplePool,
   generateSecretKey,
+  getEventHash,
   getPublicKey,
   nip05,
 } from "nostr-tools";
 import { finalizeEvent, verifyEvent } from "nostr-tools";
 import { Relay } from "nostr-tools";
+import { logDev } from "./log";
+import * as secp from "@noble/secp256k1";
 
 export const generateKeypair = () => {
   let privateKey = generateSecretKey(); // `sk` is a Uint8Array
@@ -17,7 +20,15 @@ export const generateKeypair = () => {
     publicKey,
   };
 };
-
+// Transform the event signature string to a Signature object
+function transformSignature(signature: string) {
+  const buffer = Buffer.from(signature, "hex");
+  // Assuming Signature object needs to be constructed in a specific way
+  return {
+    r: buffer.slice(0, 32).toString("hex"),
+    s: buffer.slice(32).toString("hex"),
+  };
+}
 /** Verify send event
  */
 export const sendEvent = async (
@@ -38,16 +49,35 @@ export const sendEvent = async (
     let isGood = verifyEvent(event);
     eventRender = event;
 
+    logDev(`event is good ${isGood}`);
     if (!isGood) {
       return { event: undefined, isValid: false };
     }
 
+    const eventId = getEventHash(event as any);
+    const messageHash = Buffer.from(eventId, "hex");
+
+    const signature = await secp.sign(messageHash, sk);
+    let sig = transformSignature(Buffer.from(signature).toString("hex"));
+
+
+    /** To test the local Nostr relayer */
     // const pool = new SimplePool();
     // await pool.publish(
     //   [process.env.NOSTR_RELAYER_WEBSOCKET ?? "ws://localhost:3000"],
     //   event
     // );
-    return { event, isValid: true };
+    return {
+      nostrEvent: event,
+      event: {
+        ...event,
+        signature: {
+          r: sig?.r,
+          s: sig?.s,
+        },
+      },
+      isValid: true,
+    };
   } catch (e) {
     console.log("Error send note", e);
     return {
@@ -61,13 +91,12 @@ export const sendEvent = async (
 export const getPublicKeyByHandle = async (name: string) => {
   try {
     let profile;
-    profile = await nip05.queryProfile(name)
+    profile = await nip05.queryProfile(name);
     /** try get event NIP-24 */
     if (!profile) {
-
     }
-    return profile
+    return profile;
   } catch (e) {
-    console.log("Error getPublicKeyByHandle", e)
+    console.log("Error getPublicKeyByHandle", e);
   }
-}
+};

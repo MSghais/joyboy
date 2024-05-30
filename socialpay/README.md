@@ -27,6 +27,8 @@ sequenceDiagram
 
 ## How install and use it: 
 
+If you made a changes on the Onchain contract, please build and add it into this repo. We can add a script later to do it.
+
 ### Locally
 Install the packages
 ```bash 
@@ -37,6 +39,14 @@ Run the Social relay in WIP
 ```bash 
     npm run relay:dev # with nodemon
     npm run relay
+```
+
+Run a Starknet dev:
+[Localdevnet](https://github.com/0xSpaceShard/starknet-devnet-rs?tab=readme-ov-file) 
+
+
+```bash 
+    cargo run 
 ```
 
 ### Docker 
