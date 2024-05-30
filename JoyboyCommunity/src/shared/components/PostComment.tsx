@@ -1,6 +1,5 @@
 import {Octicons} from '@expo/vector-icons';
-import {Event as EventNostr} from 'nostr-tools';
-import React from 'react';
+import {NDKEvent} from '@nostr-dev-kit/ndk';
 import {Image, Text, View} from 'react-native';
 import styled from 'styled-components/native';
 
@@ -19,7 +18,7 @@ const PostLayout = styled(View)`
 
 interface PostCommentProps {
   post?: PostType;
-  event?: EventNostr;
+  event?: NDKEvent;
   sourceUser?: string;
 }
 export const PostComment: React.FC<PostCommentProps> = (props) => {

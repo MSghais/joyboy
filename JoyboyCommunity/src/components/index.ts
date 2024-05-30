@@ -1,10 +1,10 @@
 export {Avatar, AvatarImage} from './avatar';
 export {Button} from './button';
 export {Divider} from './divider';
+export {Header} from './header';
+export {IconButton} from './iconbutton';
 export {Input} from './input';
-export {PostPage} from './note/PostPage';
-export {CreateNote} from './profile/CreateNote';
-export {EditProfile} from './profile/EditProfile';
+export {Menu} from './menu';
 export {KeyboardAvoidingView} from './skeleton/KeyboardAvoidingView';
 export {LayoutContainer} from './skeleton/LayoutContainer';
 export {RootScreenContainer} from './skeleton/RootScreenContainer';

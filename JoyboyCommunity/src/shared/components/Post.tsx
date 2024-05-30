@@ -1,12 +1,11 @@
 import {MaterialIcons, Octicons} from '@expo/vector-icons';
+import {NDKEvent} from '@nostr-dev-kit/ndk';
 import {useNavigation} from '@react-navigation/native';
-import {Event as EventNostr} from 'nostr-tools';
-import React from 'react';
 import {Image, Pressable, Text, View} from 'react-native';
 import styled from 'styled-components/native';
 
 import {Typography} from '../../components';
-import {Post as PostType, RootStackNavigationProps} from '../../types';
+import {MainStackNavigationProps, Post as PostType} from '../../types';
 
 const PostCard = styled(View)`
   background-color: #ffffff;
@@ -35,17 +34,17 @@ export const Icon = styled(View)`
 
 interface PostProps {
   post?: PostType; // TODO FIX and use only typed event
-  event?: EventNostr;
+  event?: NDKEvent;
   sourceUser?: string;
-  repostedEvent?: EventNostr;
+  repostedEvent?: NDKEvent;
 }
 
 export const Post: React.FC<PostProps> = (props) => {
   const {post, event, repostedEvent} = props;
-  const navigation = useNavigation<RootStackNavigationProps>();
+  const navigation = useNavigation<MainStackNavigationProps>();
   const handleProfilePress = (userId?: string) => {
     if (userId) {
-      navigation.navigate('UserDetail', {userId});
+      navigation.navigate('Profile', {publicKey: userId});
     }
   };
 
@@ -61,7 +60,7 @@ export const Post: React.FC<PostProps> = (props) => {
   };
 
   const handleNavigateToPostDetails = () => {
-    navigation.navigate('PostDetails', {post, event, repostedEvent, sourceUser: props.sourceUser});
+    navigation.navigate('PostDetail', {postId: event?.id, post: event});
   };
   /** @TODO react in Nostr */
   const handleReact = () => {};
