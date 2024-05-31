@@ -19,9 +19,16 @@ import { SocialPayRequest } from "types";
 dotenv.config();
 const STARKNET_URL = process.env.RPC_ENDPOINT || "http://127.0.0.1:5050";
 // const PATH_TOKEN = "../abi/social_account.compiled_contract.json"
-const PATH_TOKEN = "./abi/ERC20Upgradeable.contract_class.json";
+// const PATH_TOKEN = "./abi/ERC20Upgradeable.contract_class.json";
+const PATH_TOKEN = "./abi/erc20_test.contract_class.json";
+
+// import {  ab} from "../abi/ERC20Upgradeable.compiled_contract_class.json"
+import ABI from "../abi/ERC20Upgradeable.contract_class.json"
+// import ABI from "../abi/ERC20Upgradeable.compiled_contract_class.json";
+// import ABIMintable from "../abi/ERC20Upgradeable.compiled_contract_class.json";
+
 const PATH_TOKEN_COMPILED =
-  "./abi/ERC20Upgradeable.compiled_contract_class.json";
+  "./abi/erc20_test.compiled_contract_class.json";
 
 // Initialize RPC provider with a specified node URL (Goerli testnet in this case)
 const provider = new RpcProvider({ nodeUrl: STARKNET_URL });
@@ -44,40 +51,67 @@ export const createToken = async () => {
     );
     // console.log("compiledAAaccount =", compiledSierraAAaccount);
 
-
     // const contractConstructor: Calldata = CallData.compile({
     //   text: 'niceToken',
     //   longText: 'http://addressOfMyERC721pictures/image1.jpg',
     //   array1: myArray1,
     // });
-    console.log("declareIfNot")
+    console.log("declareIfNot");
 
-    const declareIfNot = await account0.declareIfNot({
-      contract: compiledContract,
-      casm: compiledCasm,
-    });
+    // const declareIfNot = await account0.declareIfNot({
+    //   contract: compiledContract,
+    //   casm: compiledCasm,
+    // });
 
-
+    // const contractConstructor: Calldata = CallData.compile({
+    //   symbol: "JOY",
+    //   name: "JOYBOY",
+    //   total_supply: cairo.uint256(100),
+    //   recipient: account0?.address,
+    // });
     const contractConstructor: Calldata = CallData.compile({
-      symbol: "JOY",
-      name: "JOYBOY",
-      total_supply: cairo.uint256(100),
+      // symbol: "JOY",
+      // name: "JOYBOY",
+      // total_supply: cairo.uint256(100),
       recipient: account0?.address,
     });
-
+ 
+    // const { suggestedMaxFee: estimatedFee1 } =
+    //   await account0.estimateDeclareFee({
+    //     contract: compiledContract,
+    //     // classHash:
+    //     //   "0x4656704e1eaf6121da84b205aa99862cb534a6f9a0eec530c97534dc64d043",
+    //   });
+    // console.log("estimatedFee1", estimatedFee1);
     const deployResponse = await account0.declareAndDeploy({
       contract: compiledContract,
       casm: compiledCasm,
-      constructorCalldata:contractConstructor,
-      classHash:"0x4656704e1eaf6121da84b205aa99862cb534a6f9a0eec530c97534dc64d043"
+      constructorCalldata: contractConstructor,
+      // classHash:
+      //   "0x4656704e1eaf6121da84b205aa99862cb534a6f9a0eec530c97534dc64d043",
       // constructorCalldata: [
       //   "JOY",
       //   "JOYBOY",
       //   cairo.uint256(100),
       //   account0?.address,
       // ],
+    }, {
+      
     });
 
+    // const deployResponse = await account0.deployContract({
+    //   // contract: compiledContract,
+    //   // casm: compiledCasm,
+    //   constructorCalldata: contractConstructor,
+    //   classHash:
+    //     "0x4656704e1eaf6121da84b205aa99862cb534a6f9a0eec530c97534dc64d043",
+    //   // constructorCalldata: [
+    //   //   "JOY",
+    //   //   "JOYBOY",
+    //   //   cairo.uint256(100),
+    //   //   account0?.address,
+    //   // ],
+    // });
     // const deployResponse = await account0.deployContract({
     //   classHash: contractClassHash,
     //   constructorCalldata: ["JOY", "JOYBOY",cairo.uint256(100), account0?.address ],
@@ -94,6 +128,28 @@ export const createToken = async () => {
     //   deployResponse.deploy.contract_address,
     //   provider
     // );
+  } catch (error) {
+    console.log("Error createToken= ", error);
+  }
+};
+
+export const getToken = async (tokenAddress: string, classHash?: string) => {
+  try {
+    const privateKey0 = process.env.DEVNET_PK as string;
+    const accountAddress0 = process.env.DEVNET_PUBLIC_KEY as string;
+    // const { abi: testAbi } = await provider.getClassAt(tokenAddress);
+    const { abi: testAbi } = await provider.getClassAt(tokenAddress);
+
+    const account = new Account(provider, accountAddress0, privateKey0, "1");
+
+    // const token = new Contract(ABI, tokenAddress, provider);
+    const token = new Contract(testAbi, tokenAddress, provider);
+    // const token = new Contract(ABI.abi, tokenAddress, provider);
+
+
+    // Connect account with the contract
+    token.connect(account);
+    return token;
   } catch (error) {
     console.log("Error createToken= ", error);
   }

@@ -53,20 +53,36 @@ export const createSocialAccount = async (nostrPublicKey: string) => {
     // console.log("compiledAAaccount =", compiledSierraAAaccount);
     /** Get class hash account */
 
-    // const ch = hash.computeSierraContractClassHash(compiledSierraAAaccount);
+    const ch = hash.computeSierraContractClassHash(compiledSierraAAaccount);
 
-    // const compCH = hash.computeCompiledClassHash(compiledAACasm);
+    const compCH = hash.computeCompiledClassHash(compiledAACasm);
 
-    // AAaccountClassHash = compCH;
-    // console.log("compiled class hash =", compCH);
-    // if (!AAaccountClassHash) {
-    //   const compCH = hash.computeCompiledClassHash(compiledAACasm);
+    AAaccountClassHash = compCH;
+    console.log("compiled class hash =", compCH);
+    if (!AAaccountClassHash) {
+      const compCH = hash.computeCompiledClassHash(compiledAACasm);
 
-    //   AAaccountClassHash = compCH;
-    //   console.log("compiled class hash =", compCH);
-    // }
+      AAaccountClassHash = compCH;
+      console.log("compiled class hash =", compCH);
+    }
 
-    // console.log("declare account");
+    // const { data: config } = await axios.get(
+    //     "http://127.0.0.1:5050/config",
+    //     { headers: { "Content-Type": "application/json" } }
+    //   );
+    //   console.log("Answer config =", config);
+    // fund account address before account creation
+    // const { data: answerFund } = await axios.post(
+    //   "http://127.0.0.1:5050/mint",
+    //   {
+    //     address: account0?.address,
+    //     amount: 50_000_000_000_000_000_000,
+    //     lite: true,
+    //   },
+    //   { headers: { "Content-Type": "application/json" } }
+    // );
+    // console.log("Answer mint =", answerFund);
+    console.log("declare account");
     // let chainId = await account0?.getChainId()
 
     // const { suggestedMaxFee: estimatedFee1 } = await account0.estimateDeclareFee({
@@ -80,10 +96,10 @@ export const createSocialAccount = async (nostrPublicKey: string) => {
     //   contract: compiledSierraAAaccount,
     //   casm: compiledAACasm,
     // });
-    // console.log("declareResponse", declareResponse);
+    // // console.log("declareResponse", declareResponse);
 
     // const contractClassHash = declareResponse.class_hash;
-    // const contractClassHash=AAaccountClassHash
+    const contractClassHash=AAaccountClassHash
 
     // // // Wait for the transaction to be confirmed and log the transaction receipt
     // const txR = await provider.waitForTransaction(
@@ -100,11 +116,11 @@ export const createSocialAccount = async (nostrPublicKey: string) => {
 
     
 
-    // const { transaction_hash: declTH, class_hash: decCH } =
-    //   await account0.declare({
-    //     contract: compiledSierraAAaccount,
-    //   });
-    // console.log("Customized account class hash =", decCH);
+    const { transaction_hash: declTH, class_hash: decCH } =
+      await account0.declare({
+        contract: compiledSierraAAaccount,
+      });
+    console.log("Customized account class hash =", decCH);
     // await provider.waitForTransaction(declTH);
 
     const AAaccountConstructorCallData = CallData.compile({
@@ -138,26 +154,26 @@ export const createSocialAccount = async (nostrPublicKey: string) => {
 
     // deploy account
     
-    // const { suggestedMaxFee: estimateAccoutDeployFee } = await account0.estimateAccountDeployFee({
-    //   classHash: AAaccountClassHash,
-    //   constructorCalldata: AAaccountConstructorCallData,
-    //   contractAddress: AAcontractAddress,
-    // });
-    // console.log("estimateAccoutDeployFee",estimateAccoutDeployFee)
+    const { suggestedMaxFee: estimateAccoutDeployFee } = await account0.estimateAccountDeployFee({
+      classHash: contractClassHash,
+      constructorCalldata: AAaccountConstructorCallData,
+      contractAddress: AAcontractAddress,
+    });
+    console.log("estimateAccoutDeployFee",estimateAccoutDeployFee)
     const AAaccount = new Account(provider, AAcontractAddress, AAprivateKey);
-    // const { suggestedMaxFee: estimatedFeeDeploy } = await account0.estimateDeployFee({
-    //   classHash: AAaccountClassHash,
-    //   // constructorCalldata is not necessary if the contract to deploy has no constructor
-    //   constructorCalldata: AAaccountConstructorCallData,
-    // })
+    const { suggestedMaxFee: estimatedFeeDeploy } = await account0.estimateDeployFee({
+      classHash: AAaccountClassHash,
+      // constructorCalldata is not necessary if the contract to deploy has no constructor
+      constructorCalldata: AAaccountConstructorCallData,
+    })
 
 
-    // console.log("estimatedFeeDeploy",estimatedFeeDeploy)
+    console.log("estimatedFeeDeploy",estimatedFeeDeploy)
 
 
     const { transaction_hash, contract_address } =
-    await AAaccount.deployAccount({
-      classHash: AAaccountClassHash,
+    await account0.deployAccount({
+      classHash: contractClassHash,
       constructorCalldata: AAaccountConstructorCallData,
       addressSalt: AAstarkKeyPub,
     });
