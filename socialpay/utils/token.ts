@@ -11,6 +11,9 @@ import {
   constants,
   Calldata,
   cairo,
+  Uint256,
+  uint256,
+  Call,
 } from "starknet";
 import fs from "fs";
 import axios from "axios";
@@ -19,19 +22,27 @@ import { SocialPayRequest } from "types";
 dotenv.config();
 const STARKNET_URL = process.env.RPC_ENDPOINT || "http://127.0.0.1:5050";
 // const PATH_TOKEN = "../abi/social_account.compiled_contract.json"
-// const PATH_TOKEN = "./abi/ERC20Upgradeable.contract_class.json";
-const PATH_TOKEN = "./abi/erc20_test.contract_class.json";
+const PATH_TOKEN = "./abi/ERC20Upgradeable.contract_class.json";
+// const PATH_TOKEN = "./abi/erc20_test.contract_class.json";
 
 // import {  ab} from "../abi/ERC20Upgradeable.compiled_contract_class.json"
-import ABI from "../abi/ERC20Upgradeable.contract_class.json"
+import ABI from "../abi/ERC20Upgradeable.contract_class.json";
+import { TOKENS_ADDRESS } from "../src/constants";
+import { provider } from "./starknet";
 // import ABI from "../abi/ERC20Upgradeable.compiled_contract_class.json";
 // import ABIMintable from "../abi/ERC20Upgradeable.compiled_contract_class.json";
 
+// const PATH_TOKEN_COMPILED =
+//   "./abi/erc20_test.compiled_contract_class.json";
 const PATH_TOKEN_COMPILED =
-  "./abi/erc20_test.compiled_contract_class.json";
+  "./abi/ERC20Upgradeable.compiled_contract_class.json";
 
 // Initialize RPC provider with a specified node URL (Goerli testnet in this case)
-const provider = new RpcProvider({ nodeUrl: STARKNET_URL });
+// const provider = new RpcProvider({ nodeUrl: STARKNET_URL });
+// const provider = new RpcProvider();
+
+// const provider = new Provider({ rpc:  {nodeUrl:STARKNET_URL}  });
+
 /** @TODO spec need to be discuss. This function serve as an exemple */
 export const createToken = async () => {
   try {
@@ -58,47 +69,68 @@ export const createToken = async () => {
     // });
     console.log("declareIfNot");
 
-    // const declareIfNot = await account0.declareIfNot({
-    //   contract: compiledContract,
-    //   casm: compiledCasm,
-    // });
+    const declareIfNot = await account0.declareIfNot({
+      contract: compiledContract,
+      casm: compiledCasm,
+    });
+    console.log("declareIfNot", declareIfNot);
 
-    // const contractConstructor: Calldata = CallData.compile({
-    //   symbol: "JOY",
-    //   name: "JOYBOY",
-    //   total_supply: cairo.uint256(100),
-    //   recipient: account0?.address,
-    // });
     const contractConstructor: Calldata = CallData.compile({
-      // symbol: "JOY",
-      // name: "JOYBOY",
-      // total_supply: cairo.uint256(100),
+      symbol: cairo.felt("JOY"),
+      name: cairo.felt("JOYBOY"),
+      total_supply: cairo.uint256(100),
+      // total_supply:"1",
       recipient: account0?.address,
     });
- 
+    // const contractConstructor: Calldata = CallData.compile({
+    //   // symbol: "JOY",
+    //   // name: "JOYBOY",
+    //   // total_supply: cairo.uint256(100),
+    //   recipient: account0?.address,
+    // });
+
     // const { suggestedMaxFee: estimatedFee1 } =
     //   await account0.estimateDeclareFee({
     //     contract: compiledContract,
     //     // classHash:
     //     //   "0x4656704e1eaf6121da84b205aa99862cb534a6f9a0eec530c97534dc64d043",
     //   });
-    // console.log("estimatedFee1", estimatedFee1);
-    const deployResponse = await account0.declareAndDeploy({
-      contract: compiledContract,
-      casm: compiledCasm,
-      constructorCalldata: contractConstructor,
-      // classHash:
-      //   "0x4656704e1eaf6121da84b205aa99862cb534a6f9a0eec530c97534dc64d043",
-      // constructorCalldata: [
-      //   "JOY",
-      //   "JOYBOY",
-      //   cairo.uint256(100),
-      //   account0?.address,
-      // ],
-    }, {
-      
+    // // console.log("estimatedFee1", estimatedFee1);
+    // const deployResponse = await account0.declareAndDeploy({
+    //   contract: compiledContract,
+    //   casm: compiledCasm,
+    //   constructorCalldata: contractConstructor,
+    //   // classHash:
+    //   //   "0x4656704e1eaf6121da84b205aa99862cb534a6f9a0eec530c97534dc64d043",
+    //   // constructorCalldata: [
+    //   //   "JOY",
+    //   //   "JOYBOY",
+    //   //   cairo.uint256(100),
+    //   //   account0?.address,
+    //   // ],
+    // });
+
+    let ERC20_HASH =
+      declareIfNot?.class_hash ?? (process.env.TOKEN_CLASS_HASH as string);
+    const deployResponse = await account0.deployContract({
+      // contract: compiledContract,
+      // casm: compiledCasm,
+      // constructorCalldata: contractConstructor,
+      classHash: ERC20_HASH,
+      constructorCalldata: [
+        cairo.felt("JOY"),
+        cairo.felt("JOY"),
+        cairo.uint256(100),
+        account0?.address,
+      ],
     });
 
+    let tx = await account0?.waitForTransaction(
+      deployResponse?.transaction_hash
+    );
+    console.log("tx create contract", tx);
+
+    // console.log("deploy erc20", deployResponse.deploy.contract_address);
     // const deployResponse = await account0.deployContract({
     //   // contract: compiledContract,
     //   // casm: compiledCasm,
@@ -123,16 +155,82 @@ export const createToken = async () => {
     // });
 
     // // Connect the new contract instance:
-    // const myTestContract = new Contract(
-    //   compiledContract.abi,
-    //   deployResponse.deploy.contract_address,
-    //   provider
-    // );
+    const myToken = new Contract(
+      compiledContract.abi,
+      deployResponse.contract_address,
+      // deployResponse
+      provider
+    );
+    return myToken;
   } catch (error) {
     console.log("Error createToken= ", error);
   }
 };
 
+export const transferToken = async (
+  account: Account,
+  recipient: string,
+  tokenAddress?: string
+) => {
+  let token = await getToken(tokenAddress ?? TOKENS_ADDRESS.SEPOLIA.TEST);
+
+  token?.connect(account);
+  console.log("transfer ETH to AA Account");
+
+  // let transfer = await token?.transfer(AAcontractAddress, "0.003")
+  // let transfer = await token?.transfer(AAcontractAddress, cairo.uint256(1/10**18))
+  // let transfer = await token?.transfer(AAcontractAddress, cairo.uint256("1"))
+  const balanceInitial = await token?.balanceOf(account.address);
+  console.log("account0 has a balance of:", balanceInitial);
+
+  // Execute tx transfer of 1 tokens to account 1
+  console.log(`Invoke Tx - Transfer 1 tokens to erc20 contract...`);
+  // const toTransferTk: Uint256 = cairo.uint256(1 * 10 / 18);
+  const toTransferTk: Uint256 = cairo.uint256(1 * 10 * 18);
+  let decimals = 18;
+  let total_amount_float = 0.01;
+  // let total_amount_float = 1;
+
+  let total_amount: Uint256 | undefined;
+  const total_amount_nb = total_amount_float * 10 ** Number(decimals);
+  // let total_amount;
+
+  if (Number.isInteger(total_amount_nb)) {
+    total_amount = cairo.uint256(total_amount_nb);
+  } else if (!Number.isInteger(total_amount_nb)) {
+    // total_amount=total_amount_nb
+    total_amount = uint256.bnToUint256(BigInt(total_amount_nb));
+  }
+
+  const transferCall: Call | undefined = token?.populate("transfer", {
+    // recipient: '0x78662e7352d062084b0010068b99288486c2d8b914f6e2a55ce945f8792c8b1',
+    // recipient: account0?.address,
+    recipient: recipient,
+    // amount: toTransferTk,
+    amount: total_amount ?? toTransferTk,
+  });
+  if (transferCall) {
+    // let estimateFee = await account0?.estimateInvokeFee(transferCall);
+    let estimateFee = await account?.estimateFee(transferCall);
+
+    // let estimateFee = await provider.getInvokeEstimateFee(transferCall)
+    // let estimateFee = await account0?.getSuggestedFee(transferCall);
+    console.log("estimateFee", estimateFee);
+    const { transaction_hash: transferTxHash } = await account.execute(
+      transferCall,
+      undefined,
+      {
+        // maxFee: estimateFee?.suggestedMaxFee * BigInt(3),
+        // maxFee: estimateFee?.suggestedMaxFee * BigInt(0),
+        // maxFee:estimateFee?.suggestedMaxFee,
+        // skipValidate: true,
+      }
+    );
+    console.log("transferTxHash", transferTxHash);
+    let tx = await provider.waitForTransaction(transferTxHash);
+    console.log("wait tx", tx);
+  }
+};
 export const getToken = async (tokenAddress: string, classHash?: string) => {
   try {
     const privateKey0 = process.env.DEVNET_PK as string;
@@ -146,9 +244,8 @@ export const getToken = async (tokenAddress: string, classHash?: string) => {
     const token = new Contract(testAbi, tokenAddress, provider);
     // const token = new Contract(ABI.abi, tokenAddress, provider);
 
-
     // Connect account with the contract
-    token.connect(account);
+    // token.connect(account);
     return token;
   } catch (error) {
     console.log("Error createToken= ", error);

@@ -1,6 +1,9 @@
 import { Account, RpcProvider, ec, stark } from "starknet";
 const STARKNET_URL = process.env.RPC_ENDPOINT || "http://127.0.0.1:5050";
 
+// export const provider = new RpcProvider();
+export const provider = new RpcProvider({nodeUrl:STARKNET_URL});
+
 export const createStarknetWallet = () => {
   try {
     const privateKey = stark.randomAddress();
@@ -28,10 +31,10 @@ export const connectWallet = (
     const provider = new RpcProvider({
       nodeUrl: STARKNET_URL as string,
     });
-    const privateKey =
-      privateKeyProps ?? process?.env?.DEVNET_PK as string;
+    const privateKey = privateKeyProps ?? (process?.env?.DEVNET_PK as string);
 
-    const publicKey = accountAddress ?? (process.env.DEVNET_PUBLIC_KEY as string);
+    const publicKey =
+      accountAddress ?? (process.env.DEVNET_PUBLIC_KEY as string);
     const account = new Account(provider, publicKey, privateKey);
 
     return account;
