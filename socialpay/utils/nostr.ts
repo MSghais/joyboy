@@ -76,6 +76,7 @@ export const sendEvent = async (
           s: sig?.s,
         },
       },
+      signature:sig,
       isValid: true,
     };
   } catch (e) {

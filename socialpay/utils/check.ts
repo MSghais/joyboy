@@ -52,8 +52,10 @@ export const checkAndFilterSocialPayContent = (
   }
 };
 
-export const getProfilesByNames = async (requestFormat: ContentFormat, event?:EventNostr) => {
+export const getProfilesByNames = async (requestFormat?: ContentFormat, event?:EventNostr) => {
   try {
+
+    if(!requestFormat) return;
     const { sender, amount, currency, receiver } = requestFormat;
     let receiverAddress = receiver;
     let senderAddress = sender;
@@ -74,7 +76,7 @@ export const getProfilesByNames = async (requestFormat: ContentFormat, event?:Ev
         receiverAddress = receiverProfile?.pubkey;
       }
 
-      if(receiver?.includes("alice.dev")) {
+      if(receiver?.includes("alice.xyz")) {
         
       }
     }

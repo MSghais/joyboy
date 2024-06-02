@@ -170,7 +170,8 @@ export const createToken = async () => {
 export const transferToken = async (
   account: Account,
   recipient: string,
-  tokenAddress?: string
+  tokenAddress?: string,
+  amount?: number
 ) => {
   try {
     let token = await getToken(tokenAddress ?? TOKENS_ADDRESS.SEPOLIA.TEST);
@@ -188,7 +189,7 @@ export const transferToken = async (
     // const toTransferTk: Uint256 = cairo.uint256(1 * 10 / 18);
     const toTransferTk: Uint256 = cairo.uint256(1 * 10 * 18);
     let decimals = 18;
-    let total_amount_float = 0.01;
+    let total_amount_float = amount ?? 0.01;
     // let total_amount_float = 1;
 
     let total_amount: Uint256 | undefined;
@@ -209,7 +210,7 @@ export const transferToken = async (
       // amount: toTransferTk,
       amount: total_amount ?? toTransferTk,
     });
-    console.log("transfer call",transferCall)
+    console.log("transfer call", transferCall);
     if (transferCall) {
       // let estimateFee = await account0?.estimateInvokeFee(transferCall);
       let estimateFee = await account?.estimateFee(transferCall);
