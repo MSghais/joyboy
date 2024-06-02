@@ -9,7 +9,9 @@ const app = express();
 const port = process.env.PORT_SOCIALPAY || 8080;
 app.use(express.json());
 
-/*** Maybe not needed on the specs. We can discuss it:
+/*** Not finish and used, can serve as an exemple. 
+ * Maybe not needed on the specs. 
+ * We can discuss it:
  * Endpoint to receive Nostr messages for Social pay 
  * @TODO :  sanitize event
  * Receive event Nostr
@@ -40,11 +42,11 @@ app.post("/pay", async (req, res) => {
   }
 
   /** @TODO Look user nip-05 or nip-24 for both user to get their pubkey*/
-  let formatRequestSocial=await getProfilesByNames(requestSocial,event)
+  let formatRequestSocial = await getProfilesByNames(requestSocial, event)
   logDev(`formatRequestSocial social ${JSON.stringify(formatRequestSocial)}`)
 
   if (formatRequestSocial?.receiver?.includes("@") || formatRequestSocial?.sender?.includes("@")) {
-  
+
     console.log("Invalid sender or recipient")
     return res.status(500).json({
       message: ERROR_MESSAGES.ADDRESS_INVALID?.label

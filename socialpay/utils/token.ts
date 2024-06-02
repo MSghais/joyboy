@@ -302,23 +302,15 @@ const deployBasicAccount = async () => {
 /** @TODO determine paymaster master specs to send the TX */
 export const prepareAndConnectContract = async (
   addressUser: string,
-  privateKeyProps: string
+  account:Account,
 ) => {
-  // Create a wallet account (example uses a random private key, for real use, securely store and use your private key)
-  const accountAddress =
-    addressUser ?? process.env.DEVNET_PUBLIC_KEY ?? "0xYOUR_ACCOUNT_ADDRESS";
-
-  const privateKey =
-    privateKeyProps ?? process?.env?.DEVNET_PK ?? "0xYOUR_PRIVATE_KEY";
-  const account = new Account(provider, accountAddress, privateKey);
-
   // read abi of Test contract
   const { abi: testAbi } = await provider.getClassAt(addressUser);
 
-  const socialPay = new Contract(testAbi, addressUser, provider);
+  const token = new Contract(testAbi, addressUser, provider);
   // Connect account with the contract
-  socialPay.connect(account);
-  return socialPay;
+  token.connect(account);
+  return token;
 };
 
 export const handleTransferRequest = async (

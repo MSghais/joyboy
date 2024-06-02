@@ -12,7 +12,8 @@ export const ACCOUNT_TEST_PROFILE = {
     pubkey: "",
     strkKey: "",
     nostrPk:"",
-    privateKey:""
+    privateKey:"",
+    contract:"0x0538907b56f07ef4f90e6f2da26a099ccfbc64e1cc4d03ff1e627fa7c2eb78ac"
   },
 };
 export const ERROR_MESSAGES = {

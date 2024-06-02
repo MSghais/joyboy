@@ -35,6 +35,8 @@ Install the packages
     npm i
 ```
 
+
+#### Devnet script need to be fix.
 Run the Social relay in WIP
 ```bash 
     npm run relay:dev # with nodemon
