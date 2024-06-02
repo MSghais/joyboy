@@ -66,9 +66,9 @@ export const createSocialAccount = async (
     // console.log("compiledAAaccount =", compiledSierraAAaccount);
     /** Get class hash account */
 
-    // const ch = hash.computeSierraContractClassHash(compiledSierraAAaccount);
+    const ch = hash.computeSierraContractClassHash(compiledSierraAAaccount);
 
-    // const compCH = hash.computeCompiledClassHash(compiledAACasm);
+    const compCH = hash.computeCompiledClassHash(compiledAACasm);
 
     // AAaccountClassHash = compCH;
     // console.log("compiled class hash =", compCH);
@@ -148,7 +148,7 @@ export const createSocialAccount = async (
     );
 
     // Example usage
-    const hexString =nostrPublicKey; // Replace with actual hex string
+    const hexString = nostrPublicKey; // Replace with actual hex string
     const uint256Value = hexStringToUint256(hexString);
 
     console.log("Uint256 Value:", uint256Value);
@@ -169,7 +169,7 @@ export const createSocialAccount = async (
       // public_key:cairo.uint256(nostrPublicKey),
 
       // public_key: uint256Value,
-      public_key:45
+      public_key: 45,
       // public_key: feltArray,
       // public_key:nostPubkeyUint
       // public_key:uint256.bnToUint256(1)
@@ -180,7 +180,7 @@ export const createSocialAccount = async (
       AAstarkKeyPub,
       AAaccountClassHash,
       AAaccountConstructorCallData,
-      0
+      1
     );
 
     console.log("Precalculated account address=", AAcontractAddress);
@@ -262,8 +262,6 @@ export const createSocialAccount = async (
     //   let tx = await provider.waitForTransaction(transferTxHash);
     //   console.log("wait tx", tx);
     // }
-
-    console.log("transfer done");
     // deploy account
     // // add ,"1" after AAprivateKey if this account is not a Cairo 0 contract
     // const { transaction_hash, contract_address } =
@@ -323,16 +321,39 @@ export const createSocialAccount = async (
     // );
     const AAaccount = new Account(provider, AAcontractAddress, AAprivateKey);
 
-    const estimateDeployAccount = await account0?.estimateAccountDeployFee({
+    // const estimateDeployAccount = await account0?.estimateAccountDeployFee({
+    //   classHash: AAaccountClassHash,
+    //   // constructorCalldata: AAaccountConstructorCallData,
+    //   // constructorCalldata:[uint256Value],
+    //   addressSalt: AAstarkKeyPub,
+    // });
+
+    const estimateDeployAccount = await account0?.estimateDeployFee({
       classHash: AAaccountClassHash,
-      constructorCalldata: AAaccountConstructorCallData,
+      // constructorCalldata: AAaccountConstructorCallData,
       // constructorCalldata:[uint256Value],
-      addressSalt: AAstarkKeyPub,
+      // addressSalt: AAstarkKeyPub,
     });
     console.log("Account estimateDeploy fee", estimateDeployAccount);
-    // const { transaction_hash, contract_address } = await AAaccount.deployAccount(
-    const { transaction_hash, contract_address } = await account0.deployAccount(
+    // const { transaction_hash, contract_address } =
+    //   await account0.deployContract(
+    //     {
+    //       classHash: AAaccountClassHash,
+    //       // constructorCalldata: AAaccountConstructorCallData,
+    //       // constructorCalldata:[uint256Value],
+    //       // addressSalt: AAstarkKeyPub,
+    //     },
+    //     {
+    //       // maxFee: estimateDeployAccount?.suggestedMaxFee * BigInt(2),
+    //       maxFee: estimateDeployAccount?.suggestedMaxFee,
+    //     }
+    //   );
 
+
+    const nonce = await account0?.getNonce()
+
+    const { transaction_hash, contract_address } =
+    await AAaccount.deployAccount(
       {
         classHash: AAaccountClassHash,
         constructorCalldata: AAaccountConstructorCallData,
@@ -341,10 +362,48 @@ export const createSocialAccount = async (
       },
       {
         // maxFee: estimateDeployAccount?.suggestedMaxFee * BigInt(2),
-        maxFee: estimateDeployAccount?.suggestedMaxFee,
-
+        // maxFee: estimateDeployAccount?.suggestedMaxFee,
+        // nonce:nonce
       }
     );
+
+    // const { transaction_hash, contract_address } =
+    // await account0.deployAccount(
+    //   {
+    //     classHash: AAaccountClassHash,
+    //     // constructorCalldata: AAaccountConstructorCallData,
+    //     // constructorCalldata:[uint256Value],
+    //     // addressSalt: AAstarkKeyPub,
+    //   },
+    //   {
+    //     // maxFee: estimateDeployAccount?.suggestedMaxFee * BigInt(2),
+    //     maxFee: estimateDeployAccount?.suggestedMaxFee,
+    //     // nonce:nonce
+    //   }
+    // );
+
+
+    console.log("transaction_hash", transaction_hash);
+    console.log("contract_address", contract_address);
+
+    let tx = await account0?.waitForTransaction(transaction_hash);
+
+    console.log("Tx deploy", tx);
+    // const { transaction_hash, contract_address } = await AAaccount.deployAccount(
+    // const { transaction_hash, contract_address } = await account0.deployAccount(
+
+    //   {
+    //     classHash: AAaccountClassHash,
+    //     constructorCalldata: AAaccountConstructorCallData,
+    //     // constructorCalldata:[uint256Value],
+    //     addressSalt: AAstarkKeyPub,
+    //   },
+    //   {
+    //     // maxFee: estimateDeployAccount?.suggestedMaxFee * BigInt(2),
+    //     maxFee: estimateDeployAccount?.suggestedMaxFee,
+
+    //   }
+    // );
     // await provider.waitForTransaction(transaction_hash);
     // console.log(
     //   "✅ New customized account created.\n   address =",

@@ -172,63 +172,70 @@ export const transferToken = async (
   recipient: string,
   tokenAddress?: string
 ) => {
-  let token = await getToken(tokenAddress ?? TOKENS_ADDRESS.SEPOLIA.TEST);
+  try {
+    let token = await getToken(tokenAddress ?? TOKENS_ADDRESS.SEPOLIA.TEST);
 
-  token?.connect(account);
-  console.log("transfer ETH to AA Account");
+    token?.connect(account);
+    console.log("transfer token");
+    // let transfer = await token?.transfer(AAcontractAddress, "0.003")
+    // let transfer = await token?.transfer(AAcontractAddress, cairo.uint256(1/10**18))
+    // let transfer = await token?.transfer(AAcontractAddress, cairo.uint256("1"))
+    let balanceInitial = await token?.balanceOf(account.address);
+    console.log("account0 has a balance of:", balanceInitial);
 
-  // let transfer = await token?.transfer(AAcontractAddress, "0.003")
-  // let transfer = await token?.transfer(AAcontractAddress, cairo.uint256(1/10**18))
-  // let transfer = await token?.transfer(AAcontractAddress, cairo.uint256("1"))
-  const balanceInitial = await token?.balanceOf(account.address);
-  console.log("account0 has a balance of:", balanceInitial);
+    // Execute tx transfer of 1 tokens to account 1
+    console.log(`Invoke Tx - Transfer 1 tokens to erc20 contract...`);
+    // const toTransferTk: Uint256 = cairo.uint256(1 * 10 / 18);
+    const toTransferTk: Uint256 = cairo.uint256(1 * 10 * 18);
+    let decimals = 18;
+    let total_amount_float = 0.01;
+    // let total_amount_float = 1;
 
-  // Execute tx transfer of 1 tokens to account 1
-  console.log(`Invoke Tx - Transfer 1 tokens to erc20 contract...`);
-  // const toTransferTk: Uint256 = cairo.uint256(1 * 10 / 18);
-  const toTransferTk: Uint256 = cairo.uint256(1 * 10 * 18);
-  let decimals = 18;
-  let total_amount_float = 0.01;
-  // let total_amount_float = 1;
+    let total_amount: Uint256 | undefined;
+    const total_amount_nb = total_amount_float * 10 ** Number(decimals);
+    // let total_amount;
 
-  let total_amount: Uint256 | undefined;
-  const total_amount_nb = total_amount_float * 10 ** Number(decimals);
-  // let total_amount;
+    if (Number.isInteger(total_amount_nb)) {
+      total_amount = cairo.uint256(total_amount_nb);
+    } else if (!Number.isInteger(total_amount_nb)) {
+      // total_amount=total_amount_nb
+      total_amount = uint256.bnToUint256(BigInt(total_amount_nb));
+    }
 
-  if (Number.isInteger(total_amount_nb)) {
-    total_amount = cairo.uint256(total_amount_nb);
-  } else if (!Number.isInteger(total_amount_nb)) {
-    // total_amount=total_amount_nb
-    total_amount = uint256.bnToUint256(BigInt(total_amount_nb));
-  }
+    const transferCall: Call | undefined = token?.populate("transfer", {
+      // recipient: '0x78662e7352d062084b0010068b99288486c2d8b914f6e2a55ce945f8792c8b1',
+      // recipient: account0?.address,
+      recipient: recipient,
+      // amount: toTransferTk,
+      amount: total_amount ?? toTransferTk,
+    });
+    console.log("transfer call",transferCall)
+    if (transferCall) {
+      // let estimateFee = await account0?.estimateInvokeFee(transferCall);
+      let estimateFee = await account?.estimateFee(transferCall);
 
-  const transferCall: Call | undefined = token?.populate("transfer", {
-    // recipient: '0x78662e7352d062084b0010068b99288486c2d8b914f6e2a55ce945f8792c8b1',
-    // recipient: account0?.address,
-    recipient: recipient,
-    // amount: toTransferTk,
-    amount: total_amount ?? toTransferTk,
-  });
-  if (transferCall) {
-    // let estimateFee = await account0?.estimateInvokeFee(transferCall);
-    let estimateFee = await account?.estimateFee(transferCall);
-
-    // let estimateFee = await provider.getInvokeEstimateFee(transferCall)
-    // let estimateFee = await account0?.getSuggestedFee(transferCall);
-    console.log("estimateFee", estimateFee);
-    const { transaction_hash: transferTxHash } = await account.execute(
-      transferCall,
-      undefined,
-      {
-        // maxFee: estimateFee?.suggestedMaxFee * BigInt(3),
-        // maxFee: estimateFee?.suggestedMaxFee * BigInt(0),
-        // maxFee:estimateFee?.suggestedMaxFee,
-        // skipValidate: true,
-      }
-    );
-    console.log("transferTxHash", transferTxHash);
-    let tx = await provider.waitForTransaction(transferTxHash);
-    console.log("wait tx", tx);
+      // let estimateFee = await provider.getInvokeEstimateFee(transferCall)
+      // let estimateFee = await account0?.getSuggestedFee(transferCall);
+      console.log("estimateFee", estimateFee);
+      const { transaction_hash: transferTxHash } = await account.execute(
+        transferCall,
+        undefined,
+        {
+          // maxFee: estimateFee?.suggestedMaxFee * BigInt(3),
+          // maxFee: estimateFee?.suggestedMaxFee * BigInt(0),
+          // maxFee:estimateFee?.suggestedMaxFee,
+          // skipValidate: true,
+        }
+      );
+      console.log("transferTxHash", transferTxHash);
+      let tx = await provider.waitForTransaction(transferTxHash);
+      console.log("wait tx", tx);
+      console.log("transfer done");
+      console.log("account0 has a balance of:", balanceInitial);
+      balanceInitial = await token?.balanceOf(account.address);
+    }
+  } catch (e) {
+    console.log("transferToken Error: ", e);
   }
 };
 export const getToken = async (tokenAddress: string, classHash?: string) => {

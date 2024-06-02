@@ -1,10 +1,14 @@
-import { connectToStarknet, createStarknetWallet, provider } from "../utils/starknet";
+import {
+  connectToStarknet,
+  createStarknetWallet,
+  provider,
+} from "../utils/starknet";
 import { expect } from "chai";
 import { generateKeypair, sendEvent } from "../utils/nostr";
 import { checkAndFilterSocialPayContent } from "../utils/check";
 import { logDev } from "../utils/log";
 import { createSocialAccount } from "../utils/social_account";
-import { createToken, getToken } from "../utils/token";
+import { createToken, getToken, transferToken } from "../utils/token";
 import {
   Account,
   Call,
@@ -70,17 +74,12 @@ describe("End to end function", () => {
     // const provider = new RpcProvider({ nodeUrl: STARKNET_URL });
     // const provider = new RpcProvider();
 
-
     const resp = await provider.getSpecVersion();
     console.log("rpc version =", resp);
 
     const privateKey0 = process.env.DEVNET_PK as string;
     const accountAddress0 = process.env.DEVNET_PUBLIC_KEY as string;
     const account = new Account(provider, accountAddress0, privateKey0, "1");
-
-    console.log("createToken");
-
-    console.log("token");
 
     // Interactions with the contract with meta-class
     // const bal1 = await token?.transfer(account?.address, cairo.uint256(1));
@@ -96,7 +95,14 @@ describe("End to end function", () => {
     // Connect account with the contract
 
     // let token = await getToken(TOKENS_ADDRESS.SEPOLIA.ETH)
-    let token = await createToken();
+    // let token = await createToken();
+
+    // await transferToken(
+    //   account,
+    //   account?.address,
+    //   // "0x49D36570D4E46F48E99674BD3FCC84644DDD6B96F7C741B1562B82F9E004DC7"
+    //   // "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d"
+    // );
     // let token = await getToken(
     //   // "0x00148a15f9fbf4c015b927bf88608fbafb6d149abdd5ef5b3e3b296e6ac999a4"
     //   "0x05c49bee556c6bb9d2f5e3e1a386e49ac29d3896e680bf96f37d993eb7fb1dad"
@@ -165,7 +171,7 @@ describe("End to end function", () => {
 
     // Create account
 
-    // Check balance of alice 
+    // Check balance of alice
 
     // console.log("create social account alice");
     // // Generate public and private key pair.
