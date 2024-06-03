@@ -16,12 +16,22 @@ import {
   prepareAndConnectContract,
 } from "../utils/social_account";
 import { createToken, getToken, transferToken } from "../utils/token";
-import { Account, Call, CallData, cairo, ec, shortString, stark, uint256 } from "starknet";
+import {
+  Account,
+  Call,
+  CallData,
+  Calldata,
+  byteArray,
+  cairo,
+  ec,
+  shortString,
+  stark,
+  uint256,
+} from "starknet";
 import { SocialPayRequest } from "types";
-import { ACCOUNT_TEST_PROFILE, TOKENS_ADDRESS } from "../src/constants";
-import { nostrPubkeyToUint256 } from "../utils/format";
+import { ACCOUNT_TEST_PROFILE, TOKENS_ADDRESS } from "../constants";
+import { hexStringToUint256, nostrPubkeyToUint256, stringToUint256 } from "../utils/format";
 const STARKNET_URL = process.env.RPC_ENDPOINT || "http://127.0.0.1:5050";
-
 
 /** Testing tips flow:
  * Two users Bob & Alice with Nostr & A.A (contract at this stage) => Init Nostr & SocialPay Account for (contract because SNIP-6 not finish)
@@ -40,7 +50,7 @@ describe("End to end test", () => {
     const accountAddress0 = process.env.DEVNET_PUBLIC_KEY as string;
     const account = new Account(provider, accountAddress0, privateKey0, "1");
     /*** Init account
-     * @description 
+     * @description
      * Get both account for Bob & Alice
      * Send request of account bob to alice
      ***/
@@ -48,7 +58,6 @@ describe("End to end test", () => {
     /**  Generate keypair for both account*/
     // Bob nostr account
     let { privateKey: pkBob, publicKey: bobPublicKey } = generateKeypair();
-
 
     // Bob contract/A.A
     console.log("create social account");
@@ -77,7 +86,7 @@ describe("End to end test", () => {
     let socialPayBob = await prepareAndConnectContract(
       // accountBob?.contract_address ??
       ACCOUNT_TEST_PROFILE?.bob?.contract ??
-      "0x0538907b56f07ef4f90e6f2da26a099ccfbc64e1cc4d03ff1e627fa7c2eb78ac",
+        "0x0538907b56f07ef4f90e6f2da26a099ccfbc64e1cc4d03ff1e627fa7c2eb78ac",
       account
     );
 
@@ -104,14 +113,14 @@ describe("End to end test", () => {
     // );
 
     let socialAlice = await prepareAndConnectContract(
-      // accountAlice?.contract_address ?? 
-      ACCOUNT_TEST_PROFILE?.alice?.contract ?? "0x261d2434b2583293b7dd2048cb9c0984e262ed0a3eb70a19ed4eac6defef8b1",
+      // accountAlice?.contract_address ??
+      ACCOUNT_TEST_PROFILE?.alice?.contract ??
+        "0x261d2434b2583293b7dd2048cb9c0984e262ed0a3eb70a19ed4eac6defef8b1",
       account
     );
 
     let pkAliceAccount = await socialAlice?.get_public_key();
     console.log("pkAliceAccount", pkAliceAccount);
-
 
     /** @description
      * Prepare the event
@@ -120,6 +129,7 @@ describe("End to end test", () => {
      */
 
     /** Send a note */
+    let amount: number = 10;
     let contentRequest = "@joyboy send 10 STRK to @alice.xyz";
     let content = "a test";
     // Check request, need to be undefined
@@ -156,13 +166,23 @@ describe("End to end test", () => {
     }
     console.log("Event request handle transfer", eventRequest);
 
+    let strkToken = await prepareAndConnectContract(
+      TOKENS_ADDRESS?.SEPOLIA?.STRK,
+      account
+    );
+    let balanceAlice = await strkToken?.balanceOf(
+      ACCOUNT_TEST_PROFILE?.alice?.contract
+    );
 
+    console.log("Alice balance STRK", balanceAlice);
+
+    expect(balanceAlice).to.eq(BigInt(0));
     /*** Starknet handle_transfer call for SocialPay request
      * @TODO We need to have an hard check for the pubkey before sending tx
      ***/
 
     /** @TODO
-     *  utils to fetch token address 
+     *  utils to fetch token address
      * Format socialRequest and input*/
     if (event && eventRequest) {
       let socialTransfer: SocialPayRequest = {
@@ -171,16 +191,19 @@ describe("End to end test", () => {
         signature: signature,
         created_at: event?.created_at,
         contentTransfer: {
-          amount: 1,
+          amount: cairo.uint256(amount),
           token: "STRK",
           token_address: TOKENS_ADDRESS?.SEPOLIA?.STRK,
           joyboy: {
-            public_key: bobPublicKey,
-            relays: ["wss://relay.joyboy.community.com"],
+            // public_key: bobPublicKey,
+            public_key: nostrPubkeyToUint256(bobPublicKey),
+            // relays: ["wss://relay.joyboy.community.com"],
+            relays: byteArray?.byteArrayFromString("wss://relay.joyboy.community.com"),
           },
           recipient: {
-            public_key: bobPublicKey,
-            relays: ["wss://relay.joyboy.community.com"],
+            // public_key: bobPublicKey,
+            public_key: nostrPubkeyToUint256(alicePublicKey),
+            relays: byteArray?.byteArrayFromString("wss://relay.joyboy.community.com"),
           },
           recipient_address:
             ACCOUNT_TEST_PROFILE?.alice?.contract ??
@@ -191,29 +214,56 @@ describe("End to end test", () => {
 
       // Handle transfer with SocialPay A.A
       if (socialTransfer?.signature) {
+        const longString: string[] = shortString
+          .splitLongString("[]")
+          .map((str) => shortString.encodeShortString(str));
+        const myCalldata = CallData.compile([
+          byteArray.byteArrayFromString("Take care."),
+        ]);
         console.log("send handle_transfer");
         let nostPubkeyUint = nostrPubkeyToUint256(bobPublicKey?.toString());
+        /*** @TODO fix issue serialized request and type for attributes **/
+
         let callData = CallData.compile({
-          public_key: nostPubkeyUint ?? nostrPubkeyToUint256(bobPublicKey?.toString()),
-          kind: 1,//"1",
+          public_key:cairo.uint256(1),
+          // public_key:
+          //   nostPubkeyUint ?? nostrPubkeyToUint256(bobPublicKey?.toString()),
+          kind: 1, //"1",
           created_at: event?.created_at?.toString(),
-          tags: shortString.splitLongString(""),
-          content: { ...socialTransfer?.contentTransfer },
-          sig: { ...signature },
-        })
+          tags:"[]",
+          // tags: longString,
+          // tags: myCalldata,
+          // content: content,
+          content: CallData.compile({
+            ...socialTransfer?.contentTransfer
+          }),
+          sig: {
+            /** @TODO fix stringToUint256 */
+
+            s: cairo.uint256(1),
+            r: cairo.uint256(1),
+
+            // r:signature?.r && stringToUint256(signature?.r),
+            // s:signature?.s && stringToUint256(signature?.s),
+          },
+        });
+
+        console.log("callData handle_transfer account request", callData);
 
         const { transaction_hash: transferTxHash } = await account.execute(
           {
             contractAddress: socialPayBob?.address,
             entrypoint: "handle_transfer",
-            calldata: callData
+            calldata: callData,
           },
+          undefined
         );
         console.log("handle_transfer account request", transferTxHash);
         let tx = await provider.waitForTransaction(transferTxHash);
       }
     }
 
+    console.log("Alice balance STRK", balanceAlice);
+    expect(balanceAlice).to.eq(cairo.uint256(amount));
   });
-
 });

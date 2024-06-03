@@ -1,4 +1,5 @@
 import { Event as EventNostr } from "nostr-tools"
+import { ByteArray, Uint256 } from "starknet";
 
 export interface SocialPayRequest extends EventNostr {
     sender?: string;
@@ -12,11 +13,12 @@ export interface SocialPayRequest extends EventNostr {
 }
 
 export interface NostrProfile {
-    public_key?:string;
-    relays?:string[]
+    // public_key?:string;
+    public_key?:string|Uint256;
+    relays?:string[] | string | ByteArray
 }
 export interface Transfer {
-    amount:number,
+    amount:number|Uint256,
     token:string,
     token_address:string,
     joyboy:NostrProfile,

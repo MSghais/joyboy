@@ -18,8 +18,8 @@
     "express": "^4.17.1",
     "nodemon": "^3.1.1",
     "nostr-tools": "^2.5.2",
+    "path": "^0.12.7",
     "starknet": "^6.6.6",
-
     "ws": "^8.17.0"
   },
   "devDependencies": {

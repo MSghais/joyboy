@@ -25,9 +25,30 @@ sequenceDiagram
 ```
 
 
+## Tasks
+
+The script only  work in Sepolia at this stage. Working to fix the devnet script to test it on local.
+
+Done: 
+- [x] Tiping: Start script end-to-end
+- [x] Create SocialAccount (Contract or A.A when SNIP6 is fully implemented)
+- [x] Utils for Nostr & Starknet to format, check, and do call on Starknet
+
+WIP: 
+- [] Format & Deserialize SocialPay Request to send to the contract
+- [] Fix type of SocialPay request attributes
+- [] Verify signature and call handle transfer balance
+
+TODO: 
+- [] Script working on Devnet
+
 ## How install and use it: 
 
-If you made a changes on the Onchain contract, please build and add it into this repo. We can add a script later to do it.
+The script is working only on Sepolia.
+Please setup your .env correctly as the exemple.
+If you want to do it on Localnet, change the Provider in this file to use your RPC_ENDPOINT:
+
+[Starknet utils](./utils//starknet.ts) 
 
 ### Locally
 Install the packages
@@ -57,17 +78,20 @@ Work in progress
 
 ## Test the integration
 
-Tests are script in Typescript. We are gonna use Chalk or Mochai after if needed.
+Tests are script in Typescript. We use Chalk and Mocha.
+
+The script run in default with Sepolia.
+If you want to do it on Localnet, run your devnet and change the Provider in this file to use your RPC_ENDPOINT:
+[Starknet utils](./utils//starknet.ts) 
+
+
+Run the integration test end to end
+```bash 
+    npm run test
+```
 
 Run the Social relay in WIP
 ```bash 
     npm run relay:dev # with nodemon
     npm run relay
-```
-
-### Tests the scripts
-
-Run the integration test end to end
-```bash 
-    npm run test
 ```

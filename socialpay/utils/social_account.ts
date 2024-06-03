@@ -1,15 +1,10 @@
 import {
   Account,
-  ec,
   json,
   hash,
   CallData,
-  RpcProvider,
   Contract,
   cairo,
-  shortString,
-  BigNumberish,
-  uint256,
 } from "starknet";
 import fs from "fs";
 import dotenv from "dotenv";
@@ -18,18 +13,15 @@ import {
 } from "./format";
 import { provider } from "./starknet";
 import { transferToken } from "./token";
-dotenv.config();
-const STARKNET_URL = process.env.RPC_ENDPOINT || "http://127.0.0.1:5050";
-const PATH_SOCIAL_ACCOUNT = "./abi/social_account.contract_class.json";
-const PATH_SOCIAL_ACCOUNT_COMPILED =
-  "./abi/social_account.compiled_contract.json";
+import path from 'path';
 
+dotenv.config();
+const PATH_SOCIAL_ACCOUNT = path.resolve(__dirname, '../../onchain/target/dev/joyboy_SocialAccount.contract_class.json');
+const PATH_SOCIAL_ACCOUNT_COMPILED =path.resolve(__dirname, '../../onchain/target/dev/joyboy_SocialAccount.compiled_contract_class.json');
 
 /** @TODO spec need to be discuss. This function serve as an exemple */
 export const createSocialContract = async (
   nostrPublicKey: string,
-  // AAprivateKey: string,
-  // AAstarkKeyPub: string
 ) => {
   try {
     // initialize existing predeployed account 0 of Devnet
@@ -89,8 +81,6 @@ export const createSocialContract = async (
         {
           classHash: AAaccountClassHash,
           constructorCalldata: AAaccountConstructorCallData,
-          // constructorCalldata:[uint256Value],
-          // addressSalt: AAstarkKeyPub,
         },
       );
 
@@ -106,11 +96,11 @@ export const createSocialContract = async (
     );
 
 
-    const contract = new Contract(compiledAACasm, contract_address, account0)
+    // const contract = new Contract(compiledSierraAAaccount, contract_address, account0)
     return {
       contract_address,
       tx,
-      contract
+      // contract
 
     };
   } catch (error) {
@@ -215,13 +205,9 @@ export const createSocialAccount = async (
     const { transaction_hash, contract_address } =
       await AAaccount.deployAccount(
         // await account0.deployAccount(
-
-        // const { transaction_hash, contract_address } =
-        //   await AAaccount.deployAccountContract(
         {
           classHash: AAaccountClassHash,
           constructorCalldata: AAaccountConstructorCallData,
-          // constructorCalldata:[uint256Value],
           addressSalt: AAstarkKeyPub,
         },
         // {
@@ -233,22 +219,16 @@ export const createSocialAccount = async (
         // }
       );
 
-
-
     console.log("transaction_hash", transaction_hash);
     console.log("contract_address", contract_address);
 
     let tx = await account0?.waitForTransaction(transaction_hash);
-
     console.log("Tx deploy", tx);
 
     return {
       privateKey: AAprivateKey,
       contract_address,
       tx
-
-      // contract_address,
-      // transaction_hash,
     };
   } catch (error) {
     console.log("Error createSocialAccount= ", error);

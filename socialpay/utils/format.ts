@@ -1,4 +1,4 @@
-import { Uint256 } from "starknet";
+import { Uint256, uint256 } from "starknet";
 
 export function pubkeyToUint256(pubkey: string): Uint8Array {
   // Ensure the public key is 64 hexadecimal characters (32 bytes)
@@ -31,4 +31,61 @@ export function nostrPubkeyToUint256(pubkey: string): Uint256 {
   const high = BigInt("0x" + Buffer.from(highBytes).toString("hex"));
 
   return { low, high };
+}
+
+
+
+// Define the function to convert a hex string to Uint256
+export function hexStringToUint256(hexString: string) {
+  // Remove the leading '0x' if present
+  if (hexString.startsWith('0x')) {
+    hexString = hexString.slice(2);
+  }
+
+  // // Ensure the hex string is 64 characters (32 bytes) long
+  // if (hexString.length !== 64) {
+  //   throw new Error('Invalid hex string length');
+  // }
+
+  // Split the string into two 128-bit parts (16 bytes each)
+  const highHex = hexString.slice(0, 32);
+  const lowHex = hexString.slice(32);
+
+  // Convert the hex parts to BigInt
+  const high = BigInt('0x' + highHex);
+  const low = BigInt('0x' + lowHex);
+
+  // Create the Uint256 object
+  const uint256Value = uint256.bnToUint256(low + (high << BigInt(128)));
+
+  return uint256Value;
+}
+
+
+/**
+ * Converts a string to a Uint256 format suitable for Cairo contracts.
+ * If the string is shorter than 64 hex characters, it will be padded with leading zeros.
+ *
+ * @param {string} str - The input string.
+ * @returns {{ low: string, high: string }} - The Uint256 representation.
+ */
+export function stringToUint256(str: string): Uint256{
+  // Convert the string to a hexadecimal representation
+  let hexString = Buffer.from(str, 'utf8').toString('hex');
+
+  // Ensure the hex string is 64 characters long (32 bytes)
+  hexString = hexString.padStart(64, '0');
+
+  // Split the string into two 128-bit parts (16 bytes each)
+  const highHex = hexString.slice(0, 32);
+  const lowHex = hexString.slice(32);
+
+  // Convert the hex parts to BigInt
+  const high = BigInt('0x' + highHex);
+  const low = BigInt('0x' + lowHex);
+
+  // Create the Uint256 object
+  const uint256Value = uint256.bnToUint256(low + (high << BigInt(128)));
+
+  return uint256Value;
 }

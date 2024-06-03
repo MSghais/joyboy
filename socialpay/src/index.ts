@@ -2,7 +2,7 @@ import express from "express";
 import { SimplePool, Event } from "nostr-tools";
 import dotenv from "dotenv";
 import { checkAndFilterSocialPayContent, getProfilesByNames } from "../utils/check";
-import { ERROR_MESSAGES } from "./constants";
+import { ERROR_MESSAGES } from "../constants";
 import { logDev } from "../utils/log";
 dotenv.config();
 const app = express();
@@ -10,8 +10,8 @@ const port = process.env.PORT_SOCIALPAY || 8080;
 app.use(express.json());
 
 /*** Not finish and used, can serve as an exemple. 
- * Maybe not needed on the specs. 
- * We can discuss it:
+ * @escription Maybe not needed on the specs, if the Joyboy client serve as a Wallet. 
+ * 
  * Endpoint to receive Nostr messages for Social pay 
  * @TODO :  sanitize event
  * Receive event Nostr

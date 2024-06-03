@@ -2,6 +2,7 @@ import { Account, RpcProvider, ec, stark } from "starknet";
 const STARKNET_URL = process.env.RPC_ENDPOINT || "http://127.0.0.1:5050";
 
 export const provider = new RpcProvider();
+/** @TODO Uncomment to use with your own RPC_ENDPOINT, Sepolia by default */
 // export const provider = new RpcProvider({nodeUrl:STARKNET_URL});
 
 export const createStarknetWallet = () => {
