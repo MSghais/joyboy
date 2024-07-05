@@ -2,22 +2,15 @@ import {NDKEvent, NDKKind} from '@nostr-dev-kit/ndk';
 import {useAccount} from '@starknet-react/core';
 import {Fraction} from '@uniswap/sdk-core';
 import {FlatList, RefreshControl, View} from 'react-native';
-import {byteArray, cairo, CallData, uint256} from 'starknet';
+import {cairo} from 'starknet';
 
 import {Button, Divider, Header, Text} from '../../components';
-import {ESCROW_ADDRESSES} from '../../constants/contracts';
-import {Entrypoint} from '../../constants/misc';
+import {CHAIN_ID} from '../../constants/env';
+import {ETH} from '../../constants/tokens';
 import {useNostrContext} from '../../context/NostrContext';
-import {
-  useChainId,
-  useStyles,
-  useTips,
-  useToast,
-  useTransaction,
-  useWaitConnection,
-  useWalletModal,
-} from '../../hooks';
-import {parseDepositEvents} from '../../utils/events';
+import {useStyles, useTips, useWaitConnection} from '../../hooks';
+import {useClaim, useEstimateClaim} from '../../hooks/api';
+import {useToast, useTransactionModal, useWalletModal} from '../../hooks/modals';
 import {decimalsScale} from '../../utils/helpers';
 import stylesheet from './styles';
 
@@ -28,77 +21,53 @@ export const Tips: React.FC = () => {
   const {ndk} = useNostrContext();
 
   const account = useAccount();
-  const chainId = useChainId();
-  const sendTransaction = useTransaction();
+  const claim = useClaim();
+  const estimateClaim = useEstimateClaim();
   const walletModal = useWalletModal();
   const waitConnection = useWaitConnection();
+  const {show: showTransactionModal} = useTransactionModal();
   const {showToast} = useToast();
 
   const onClaimPress = async (depositId: number) => {
     if (!account.address) {
       walletModal.show();
-
-      const result = await waitConnection();
-      if (!result) return;
     }
 
-    const kind = NDKKind.Text;
-    const content = cairo.felt(depositId);
-    const tags = [];
-    const createdAt = Date.now();
+    const connectedAccount = await waitConnection();
+    if (!connectedAccount || !connectedAccount.address) return;
 
-    const event = new NDKEvent(ndk);
-    event.kind = kind;
-    event.content = `claim ${content}`;
-    event.tags = tags;
-    event.created_at = createdAt;
+    const getNostrEvent = async (gasAmount: bigint) => {
+      const event = new NDKEvent(ndk);
+      event.kind = NDKKind.Text;
+      event.content = `claim: ${cairo.felt(depositId)},${cairo.felt(
+        connectedAccount.address!,
+      )},${cairo.felt(ETH[CHAIN_ID].address)},${gasAmount.toString()}`;
+      event.tags = [];
 
-    const signature = await event.sign();
-    const signatureR = `0x${signature.slice(0, signature.length / 2)}`;
-    const signatureS = `0x${signature.slice(signature.length / 2)}`;
+      await event.sign();
+      return event.rawEvent();
+    };
 
-    const publicKey = event.pubkey;
+    const feeResult = await estimateClaim.mutateAsync(await getNostrEvent(BigInt(1)));
+    const fee = BigInt(feeResult.data.fee);
 
-    const claimCallData = CallData.compile([
-      uint256.bnToUint256(`0x${publicKey}`), // public_key
-      createdAt, // created_at
-      kind, // kind
-      byteArray.byteArrayFromString(JSON.stringify(tags)), // tags
-      content, // content
-      {
-        r: uint256.bnToUint256(signatureR), // signature R
-        s: uint256.bnToUint256(signatureS), // signature S
-      }, // signature
-    ]);
+    const claimResult = await claim.mutateAsync(await getNostrEvent(fee));
+    const txHash = claimResult.data.transaction_hash;
 
-    const receipt = await sendTransaction({
-      calls: [
-        {
-          contractAddress: ESCROW_ADDRESSES[chainId],
-          entrypoint: Entrypoint.CLAIM,
-          calldata: claimCallData,
-        },
-      ],
-    });
+    showTransactionModal(txHash, async (receipt) => {
+      if (receipt.isSuccess()) {
+        tips.refetch();
+        showToast({type: 'success', title: 'Tip claimed successfully'});
+      } else {
+        let description = 'Please Try Again Later.';
+        if (receipt.isRejected()) {
+          description = receipt.transaction_failure_reason.error_message;
+        }
 
-    if (receipt.isSuccess()) {
-      showToast({type: 'success', title: 'Tip claimed successfully'});
-    } else {
-      let description = 'Please Try Again Later.';
-      if (receipt.isRejected()) {
-        description = receipt.transaction_failure_reason.error_message;
+        showToast({type: 'error', title: `Failed to claim the tip. ${description}`});
       }
-
-      showToast({type: 'error', title: `Failed to send the tip. ${description}`});
-    }
+    });
   };
-
-  console.log(
-    tips.data.pages
-      .flat()
-      .map((page) => page.events)
-      .flat(),
-  );
 
   return (
     <View style={styles.container}>
@@ -106,15 +75,11 @@ export const Tips: React.FC = () => {
 
       <FlatList
         contentContainerStyle={styles.flatListContent}
-        data={tips.data.pages
-          .flat()
-          .map((page) => page.events)
-          .flat()}
+        data={tips.data ?? []}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        keyExtractor={(item) => item.transaction_hash}
+        keyExtractor={(item) => item.event.transaction_hash}
         renderItem={({item}) => {
-          const event = parseDepositEvents(item, chainId);
-          const amount = new Fraction(event.amount, decimalsScale(event.token.decimals)).toFixed(6);
+          const amount = new Fraction(item.amount, decimalsScale(item.token.decimals)).toFixed(6);
 
           return (
             <View style={styles.tip}>
@@ -124,15 +89,27 @@ export const Tips: React.FC = () => {
                     {amount}
                   </Text>
                   <Text weight="bold" fontSize={17}>
-                    {event.token.symbol}
+                    {item.token.symbol}
                   </Text>
                 </View>
 
                 <View>
-                  {event.depositId ? (
-                    <Button small variant="primary" onPress={() => onClaimPress(event.depositId)}>
-                      Claim
-                    </Button>
+                  {item.depositId ? (
+                    <>
+                      {item.claimed ? (
+                        <Button small variant="default" disabled>
+                          Claimed
+                        </Button>
+                      ) : (
+                        <Button
+                          small
+                          variant="primary"
+                          onPress={() => onClaimPress(item.depositId)}
+                        >
+                          Claim
+                        </Button>
+                      )}
+                    </>
                   ) : null}
                 </View>
               </View>
@@ -142,7 +119,7 @@ export const Tips: React.FC = () => {
               <View style={styles.senderInfo}>
                 <View style={styles.sender}>
                   <Text weight="semiBold" color="text" numberOfLines={1} ellipsizeMode="middle">
-                    {event.sender}
+                    {item.sender}
                   </Text>
                 </View>
 
