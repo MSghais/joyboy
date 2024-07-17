@@ -41,10 +41,13 @@ export default ThemedStyleSheet((theme) => ({
   sender: {
     flex: 1,
   },
+  buttonIndicator: {
+    marginRight: Spacing.xsmall,
+  },
   statusDisabledButton: {
     backgroundColor: theme.colors.buttonDisabledBackground,
   },
   statusButton: {
     backgroundColor: theme.colors.buttonBackground,
-  },
+  }
 }));
