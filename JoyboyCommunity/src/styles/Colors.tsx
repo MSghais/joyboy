@@ -71,8 +71,8 @@ export const DarkTheme = {
     secondary: '#0C0C4F',
     secondaryLight: '#e7e7ed',
 
-    background: '#000',
-    surface: '#000',
+    background: '#272727',
+    surface: '#242424',
     elevated: '#FFFFFF',
     overlay: 'rgba(0, 0, 0, 0.5)',
     shadow: 'rgba(13, 13, 29, 0.2)',
