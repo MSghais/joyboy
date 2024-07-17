@@ -41,4 +41,10 @@ export default ThemedStyleSheet((theme) => ({
   sender: {
     flex: 1,
   },
+  statusDisabledButton: {
+    backgroundColor: theme.colors.buttonDisabledBackground,
+  },
+  statusButton: {
+    backgroundColor: theme.colors.buttonBackground,
+  },
 }));
